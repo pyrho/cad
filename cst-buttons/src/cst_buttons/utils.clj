@@ -5,9 +5,9 @@
 (defn drawscale [length step width]
   (for [n (range 0 (- length 1) step)]
     (if (= (mod n (* 2 step)) 0)
-      (->> (cube step width 1
-            (translate [n 0 0])
-            (color [1 1 1])))))) 
+      (->> (cube step width 1)
+           (translate [n 0 0])
+           (color [1 1 1]))))) 
 
 ; Draws a ruler of specified length.
 ; Origin of the ruler is at 0, and it is laid out along the X axis.

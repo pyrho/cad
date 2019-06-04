@@ -11,14 +11,19 @@
 ;
 ; v0.2
 ; ====
-; - [ ] side cross still a bit too far apart, but really a bit.
+; - [x] side cross still a bit too far apart, but really a bit.
+; - [ ] refine fillet for upwards arm
+; - [x] the side crosses are maybe a bit too deep 
+;       This could be fixed by making the center hollow
+; - [ ] upwards arm hits bezel on side of mouse
+; v0.3
+; ====
 ;;;; }}}
 
 (ns cst-buttons.core
   (:refer-clojure :exclude [use import])
   (:require [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
-            [cst-buttons.constants :refer :all]
             [cst-buttons.cross :refer :all]
             [cst-buttons.skeleton :refer :all]))
 
@@ -28,9 +33,9 @@
     skeleton
     crosses))
 
-(->> exoskeletonButtonHolder
-     (write-scad) 
-     (str "include <utils.scad>; //translate([8.5, 11, 0]) ruler(100);\n")
-     (spit "things/cst_proto.scad"))
-
-; (spit "things/cst_proto.scad" (write-scad (create-cross false)))
+(defn main []
+  (->> exoskeletonButtonHolder
+      (write-scad) 
+      (str "include <utils.scad>; //translate([8.5, 11, 0]) ruler(100);\n")
+      (spit "things/cst_proto.scad")))
+(main)

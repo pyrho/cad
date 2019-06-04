@@ -18,22 +18,41 @@
         create-arm
         (rotate [0 0 (/ pi 2)] create-arm)))))
 
-(create-cross true)
-
 (defn place-cross [x y z isTopCross]
   (translate [x y z] (create-cross isTopCross)))
 
 (def top-cross 
-  (place-cross 
-    (- ltrac-x-mid (get-in cross-data [:top :offset])) 0 0 true))
+  (let [top-offset (get-in cross-data [:top :offset])]
+    (place-cross 
+      (- ltrac-x-mid top-offset) 0 0 true)))
+
+; A little hole to accomodate the plastic thing coming out of the side cross.
+; Probably a PCB mount inside the mouse
+(defn side-cross-holes [x y z]
+  (->> (sphere 3)
+       (with-fn 100)
+       (scale [0.5 0.5 1])
+       (translate [x y (+ z 4.5)])))
 
 (def left-cross 
-  (place-cross 
-    short-skeleton-arm-x (+ (cross :side-offset) (- ltrac-y-mid) ) 0 false))
+  (let [side-offset (get-in cross-data [:side :offset])
+        x short-skeleton-arm-x
+        y (+ side-offset (- ltrac-y-mid))
+        z 0
+        isTopCross false]
+    (difference
+      (place-cross x y z isTopCross)
+      (side-cross-holes x y z))))
 
 (def right-cross 
-  (place-cross 
-    short-skeleton-arm-x (- ltrac-y-mid (cross :side-offset)) 0 false))
+  (let [side-offset (get-in cross-data [:side :offset])
+        x short-skeleton-arm-x
+        y (- ltrac-y-mid side-offset)
+        z 0
+        isTopCross false]
+    (difference
+      (place-cross x y z isTopCross)
+      (side-cross-holes x y z))))
 
 (def crosses 
   (union top-cross left-cross right-cross))

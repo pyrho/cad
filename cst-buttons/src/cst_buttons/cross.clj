@@ -6,7 +6,7 @@
 
 (defn create-cross [isTopCross]
   (let [c cross-data
-        create-arm #((cube 
+        create-arm (#(cube 
                       (c :width) 
                       (get-in c [:arm :width])
                       (get-in c [(if isTopCross :top :side) :height])))]
@@ -15,16 +15,17 @@
       [0 0 bottom-clearance]
       ; first branch of the cross
       (union
-        (create-arm)
-        (rotate 0 0 90 (create-arm))))))
+        create-arm
+        (rotate [0 0 (/ pi 2)] create-arm)))))
+
+(create-cross true)
 
 (defn place-cross [x y z isTopCross]
   (translate [x y z] (create-cross isTopCross)))
 
 (def top-cross 
-  (let [cross-top-offset 29]
-    (place-cross 
-      (- ltrac-x-mid cross-top-offset) 0 0 true)))
+  (place-cross 
+    (- ltrac-x-mid (get-in cross-data [:top :offset])) 0 0 true))
 
 (def left-cross 
   (place-cross 

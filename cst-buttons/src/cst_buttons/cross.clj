@@ -24,7 +24,7 @@
 (def top-cross 
   (let [top-offset (get-in cross-data [:top :offset])]
     (place-cross 
-      (- ltrac-x-mid top-offset) 0 0 true)))
+      (- ltrac-x-mid top-offset) 0 0.3 true)))
 
 ; A little hole to accomodate the plastic thing coming out of the side cross.
 ; Probably a PCB mount inside the mouse

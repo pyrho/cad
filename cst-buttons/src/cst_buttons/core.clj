@@ -12,10 +12,11 @@
 ; v0.2
 ; ====
 ; - [x] side cross still a bit too far apart, but really a bit.
-; - [ ] refine fillet for upwards arm
+; - [x] refine fillet for upwards arm
 ; - [x] the side crosses are maybe a bit too deep 
 ;       This could be fixed by making the center hollow
 ; - [ ] upwards arm hits bezel on side of mouse
+; - [ ] add front clip (that hooks to the sides too)
 ; v0.3
 ; ====
 ;;;; }}}

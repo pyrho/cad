@@ -13,3 +13,4 @@
                  :arm {:width 1.7}})
 (def skeleton-upwards-length 32.54)
 (def short-skeleton-arm-x (- (/ ltrac-length 2) skeleton-y-top-offset))
+(def skeleton-data {:back {:height 3}})

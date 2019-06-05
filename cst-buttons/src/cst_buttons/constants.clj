@@ -9,8 +9,8 @@
 (def skeleton-y-top-offset 92.55)
 (def cross-data {:width 6.5
                  :top {:height 5 :offset 29}
-                 :side {:height 2.5 :offset 10}
+                 :side {:height 3.5 :offset 9.8}
                  :arm {:width 1.7}})
 (def skeleton-upwards-length 32.54)
 (def short-skeleton-arm-x (- (/ ltrac-length 2) skeleton-y-top-offset))
-(def skeleton-data {:back {:height 3}})
+(def skeleton-data {:back {:height 3 :angle 60}})

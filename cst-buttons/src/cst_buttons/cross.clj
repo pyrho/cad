@@ -31,8 +31,7 @@
 (defn side-cross-holes [x y z]
   (->> (sphere 3)
        (with-fn 100)
-       (scale [0.5 0.5 1])
-       (translate [x y (+ z 4.5)])))
+       (translate [x y (+ z 4)])))
 
 (def left-cross 
   (let [side-offset (get-in cross-data [:side :offset])

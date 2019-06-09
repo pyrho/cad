@@ -25,4 +25,9 @@ v0.3 issues
 
 0.4 issues
 ----------
-
+- [x] sides crosses too flimsy
+      The only way is to have a very flat cross
+- [x] side cross still too far apart, maybe just 0.2mm
+- [ ] back clip maybe 0.1 mm too far from back of trackball
+- [ ] top cross maybe too deep, does not fit in properly, maybe something hidden
+      is blocking it

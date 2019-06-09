@@ -1,6 +1,7 @@
 (ns cst-buttons.utils
   (:refer-clojure :exclude [use import])
-  (:require [scad-clj.model :refer :all]))
+  (:require [scad-clj.model :refer :all])
+  (:require [scad-clj.scad :refer :all]))
 
 (defn drawscale [length step width]
   (for [n (range 0 (- length 1) step)]
@@ -23,3 +24,16 @@
          (translate [length -38 -1])
          (color [0 0 0]))))
 ; (ruler 100)
+
+(defn myrender [model]
+  (spit "things/cst_proto.scad" (write-scad model)))
+
+(defn caca []
+  (define-module 'rotate_about_point '[z y pt] ( translate pt)))
+
+;; module rotate_about_pt(z, y, pt) {
+;;                                   translate(pt)
+;;                                   rotate([0, y, z]) // CHANGE HERE
+;;                                   translate(-pt)
+;;                                   children();
+;;                                   }

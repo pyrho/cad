@@ -18,6 +18,7 @@
 (def skeleton-upwards-length 32.54)
 (def short-skeleton-arm-x (- (/ ltrac-length 2) skeleton-y-top-offset))
 (def skeleton-data {:back {:height (+ bottom-clearance 3)
+                           :width 2
                            :angle 60
                            :angled-size '( 2 10 10)}
                     :front {:height (+ bottom-clearance 20)
@@ -86,8 +87,12 @@
 (def back-clip
   (let [skd skeleton-data
         clip-height (get-in skd [:back :height])
+        clip-width (get-in skd [:back :width])
+        mid-x (/ ltrac-length 2)
+        x-translate (- (- (/ clip-width 2)) mid-x)
         ;; Place the upwards arm at the base of the bottom skeleton
-        upwards-arm (translate [(- ltrac-width) 0 (- (/ clip-height 2) ltrac-z-mid)] (cube 2 skeleton-width clip-height))
+        upwards-arm (translate [x-translate 0 (- (/ clip-height 2) ltrac-z-mid)]
+                               (cube clip-width skeleton-width clip-height))
         angle (get-in skd [:back :angle])
         angled-arm (->> (apply cube (get-in skd [:back :angled-size]))
                         ;; Translate the origin of the rotation at the base of the cube (by default it rotates around its center)
@@ -96,17 +101,18 @@
                         ;; Compensate for the extra X axis that's spilling on the back clip after rotation
                         (translate [0 0 (/ (first (get-in skd [:back :angled-size])) 2)])
                         ;; Put in at the proper place
-                        (translate [(- ltrac-width) 0 clip-height]))
+                        (translate [x-translate 0 clip-height]))
         upwards-and-angled-fillet (->> (cylinder 1.3 10)
                                        (with-fn 50)
                                        (rotate [ 0 (/ pi 2) (/ pi 2) ])
-                                       (translate [(- ltrac-width) 0 clip-height]))]
+                                       (translate [x-translate 0 clip-height]))]
 
     (union angled-arm upwards-arm upwards-and-angled-fillet)))
 
 (def front-clip
   (let [clip-height (get-in skeleton-data [:front :height])
-        upwards (translate [ltrac-width 0 (- (/ clip-height 2) ltrac-z-mid)](cube 2 skeleton-width (get-in skeleton-data [:front :height])))]
+        upwards (translate [(+ ltrac-width 2) 0 (- (/ clip-height 2) ltrac-z-mid)]
+                           (cube 2 skeleton-width (get-in skeleton-data [:front :height])))]
     upwards))
 
 (def side-tower
@@ -122,10 +128,10 @@
         top-support (->> bottom-support
                          (mirror [ 1 0 0])
                          (translate [-8 0 0]))
-        hollower (union (->> (-#(cube (switch-data :x) 40 (switch-data :y)))
+        hollower (union (->> (-#(cube (switch-data :x) 30 (switch-data :y)))
                              (translate [5 60 -24] )
                              (rotate [(+ (deg->rad 38.5)) 0 0]))
-                        (->> (-#(cube (switch-data :x) 40 (switch-data :y)))
+                        (->> (-#(cube (switch-data :x) 30 (switch-data :y)))
                              (translate [-15 60 -24] )
                              (rotate [(+ (deg->rad 38.5)) 0 0])))]
     (union (difference translated-slope hollower) bottom-support top-support)))

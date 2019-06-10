@@ -11,15 +11,25 @@
 (def ltrac-z-mid (/ bottom-clearance 2))
 (def skeleton-width 10)
 (def skeleton-y-top-offset 92.55)
-(def cross-data {:width 6.5
+(def cross-data {:width 6.4
                  :top {:height 5 :offset 29}
                  :side {:height 2.8 :offset 15}
-                 :arm {:width 1.7}})
+                 :arm {:width 1.5}})
 (def skeleton-upwards-length 32.54)
 (def short-skeleton-arm-x (- (/ ltrac-length 2) skeleton-y-top-offset))
 (def skeleton-data {:back {:height (+ bottom-clearance 3)
                            :angle 60
-                           :angled-size '( 2 10 10)}})
+                           :angled-size '( 2 10 10)}
+                    :front {:height (+ bottom-clearance 20)
+                            :size '(2 10 10)}})
+
+(def button-tower-data {:offset 16.5
+                        :size [10 5 3 ]
+                        :slope {:xyz [50 25 32]}
+                        :tower {:xyz [10 5 32]}})
+(def switch-data {:x 13.85
+                  :y 13.85
+                  :z 5.1})
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Skeleton
@@ -54,6 +64,18 @@
                    (rotate [0 (deg->rad angle) 0])
                    (translate [ -85 0 7]))]
      (union upwards clip))))
+(defn doPoly [l w h]
+  (translate [(- (/ l 2)) (- (/ w 2)) 0](polyhedron [[0 0 0]
+                                                     [l 0 0]
+                                                     [l w 0]
+                                                     [0 w 0] ; Bottom face
+                                                     [0 0 h] ; Top points
+                                                     [l 0 h]]
+                                                    [[0 1 2 3]
+                                                     [5 4 3 2]
+                                                     [0 4 5 1]
+                                                     [0 3 4]
+                                                     [5 2 1]])))
 
 (defn rotate-at-point [x y z point object]
   (->> object
@@ -78,38 +100,42 @@
         upwards-and-angled-fillet (->> (cylinder 1.3 10)
                                        (with-fn 50)
                                        (rotate [ 0 (/ pi 2) (/ pi 2) ])
-                                       (translate [(- ltrac-width) 0 clip-height]))
-        tmp (difference upwards-and-angled-fillet upwards-arm)]
+                                       (translate [(- ltrac-width) 0 clip-height]))]
 
-    (union angled-arm upwards-arm tmp)))
+    (union angled-arm upwards-arm upwards-and-angled-fillet)))
 
-(def back-fillet
-  (let [bottom (->> (difference (cylinder 1.8 10) (translate [-2.2, -2.7 1] (cube 5 5 20)))
-                    (with-fn 50)
-                    (rotate [0 (/ pi 2) (/ pi 2)])
-                    (translate [(- (- ltrac-width) 0.75) 0 1]))
-        top (->> (cylinder 1.3 10)
-                 (with-fn 50)
-                 (rotate [0 (/ pi 2) (/ pi 2)])
-                 (translate [(- (- ltrac-width) 1.75) 0 4]))]
-    (union top bottom)))
+(def front-clip
+  (let [clip-height (get-in skeleton-data [:front :height])
+        upwards (translate [ltrac-width 0 (- (/ clip-height 2) ltrac-z-mid)](cube 2 skeleton-width (get-in skeleton-data [:front :height])))]
+    upwards))
 
-
-(def side-fillet
-  (->> (cylinder 1.2 10)
-       (with-fn 100)
-       (rotate [0 (/ pi 2) 0])
-       (translate [short-skeleton-arm-x (- (/ ltrac-width 2) 0.1) 0.5])))
+(def side-tower
+  "This is the tower which holds the buttons on the left side."
+  (let [slope (apply doPoly (get-in button-tower-data [:slope :xyz]))
+        translated-slope (translate [short-skeleton-arm-x
+                                     (+ (/ ltrac-width 2) (/ ((get-in button-tower-data [:slope :xyz]) 1) 2))
+                                     (- (/ bottom-clearance 2))]
+                                    slope)
+        bottom-support (->> (cube 50 10 bottom-clearance )
+                            (rotate [ 0 0 (/ pi 4)])
+                            (translate [-23 18 0]))
+        top-support (->> bottom-support
+                         (mirror [ 1 0 0])
+                         (translate [-8 0 0]))
+        hollower (union (->> (-#(cube (switch-data :x) 40 (switch-data :y)))
+                             (translate [5 60 -24] )
+                             (rotate [(+ (deg->rad 38.5)) 0 0]))
+                        (->> (-#(cube (switch-data :x) 40 (switch-data :y)))
+                             (translate [-15 60 -24] )
+                             (rotate [(+ (deg->rad 38.5)) 0 0])))]
+    (union (difference translated-slope hollower) bottom-support top-support)))
 
 (def skeleton
   (union
     short-arm
     back-clip
-    ;; back-fillet
+    front-clip
     long-arm))
-    ; side-upwards
-    ; side-fillet
-
 ;;;;;;;;;;;;;;
 ; Design log
 
@@ -164,13 +190,15 @@
 (def exoskeletonButtonHolder
   (union
     skeleton
-    crosses))
+    crosses
+    side-tower))
 
 (defn main []
   (->> exoskeletonButtonHolder
       (write-scad)
       (str "include <utils.scad>; //translate([8.5, 11, 0]) ruler(100);\n")
-      (spit "things/cst_proto.scad")))
+      (spit "things/cst_proto2.scad")))
+
 (main)
 
 ;;;; Experiments
@@ -182,3 +210,13 @@
       ;; (rotate-at-point 0 (deg->rad 70) 0 [10 0 10])
       (write-scad)
       (spit "things/cst_proto.scad")))
+;; Button tower
+
+;; (->> (doPoly 10 5 3)
+;;      (write-scad)
+;;      (spit "things/cst_proto.scad"))
+;;; polyhedron(
+;;points=[[0,0,0], [l,0,0], [l,w,0], [0,w,0], [0,w,h], [l,w,h]],
+;;faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+;;);
+

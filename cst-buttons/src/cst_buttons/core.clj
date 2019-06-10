@@ -22,6 +22,7 @@
                            :angle 60
                            :angled-size '( 2 10 10)}
                     :front {:height (+ bottom-clearance 20)
+                            :width 2
                             :size '(2 10 10)}})
 
 (def button-tower-data {:offset 16.5
@@ -111,7 +112,9 @@
 
 (def front-clip
   (let [clip-height (get-in skeleton-data [:front :height])
-        upwards (translate [(+ ltrac-width 2) 0 (- (/ clip-height 2) ltrac-z-mid)]
+        clip-width (get-in skeleton-data [:front :width])
+        mid-x (/ ltrac-length 2)
+        upwards (translate [(+ mid-x (/ clip-width 2)) 0 (- (/ clip-height 2) ltrac-z-mid)]
                            (cube 2 skeleton-width (get-in skeleton-data [:front :height])))]
     upwards))
 

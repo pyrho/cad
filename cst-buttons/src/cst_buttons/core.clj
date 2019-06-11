@@ -25,13 +25,16 @@
                             :width 2
                             :size '(2 10 10)}})
 
-(def button-tower-data {:offset 16.5
-                        :size [10 5 3 ]
-                        :slope {:xyz [50 25 32]}
-                        :tower {:xyz [10 5 32]}})
-(def switch-data {:x 13.85
-                  :y 13.85
+(def switch-around-offset 8)
+(def switch-padding 3)
+(def switch-data {:x 14
+                  :y 14
                   :z 5.1})
+
+(def button-tower-data {:offset 20
+                        :size [10 5 3 ]
+                        :slope {:xyz [(+ switch-around-offset (* 2 (switch-data :y))) (+ switch-around-offset (* 2 (switch-data :y))) 30]}
+                        :tower {:xyz [10 5 30]}})
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Skeleton
@@ -120,24 +123,33 @@
 
 (def side-tower
   "This is the tower which holds the buttons on the left side."
-  (let [slope (apply doPoly (get-in button-tower-data [:slope :xyz]))
-        translated-slope (translate [short-skeleton-arm-x
-                                     (+ (/ ltrac-width 2) (/ ((get-in button-tower-data [:slope :xyz]) 1) 2))
-                                     (- (/ bottom-clearance 2))]
-                                    slope)
-        bottom-support (->> (cube 50 10 bottom-clearance )
-                            (rotate [ 0 0 (/ pi 4)])
-                            (translate [-23 18 0]))
-        top-support (->> bottom-support
-                         (mirror [ 1 0 0])
-                         (translate [-8 0 0]))
-        hollower (union (->> (-#(cube (switch-data :x) 30 (switch-data :y)))
-                             (translate [5 60 -24] )
-                             (rotate [(+ (deg->rad 38.5)) 0 0]))
-                        (->> (-#(cube (switch-data :x) 30 (switch-data :y)))
-                             (translate [-15 60 -24] )
-                             (rotate [(+ (deg->rad 38.5)) 0 0])))]
-    (union (difference translated-slope hollower) bottom-support top-support)))
+  (let [[x y z] (get-in button-tower-data [:slope :xyz])
+        angled (let [angled-face (->> (apply cube (get-in button-tower-data [:slope :xyz])) ; First create the angled face
+                                      (rotate [(- (/ pi 3)) 0 0]))
+                     switch-hole-high (->> (cube (switch-data :x) (switch-data :y) 70)
+                                      (rotate [(- (/ pi 3)) 0 0])
+                                           (translate [(- (- switch-padding (- (/ x 2) (/ (switch-data :x) 2))))
+                                                       (- (- (- (/ y 2) (/ (switch-data :y) 2)) switch-padding))
+                                                       0]))
+                     switch-hole-low (->> (cube (switch-data :x) (switch-data :y) 70)
+                                        (rotate [(- (/ pi 3)) 0 0])
+                                          (translate [(- switch-padding (- (/ x 2) (/ (switch-data :x) 2)))
+                                                      (- (- (/ y 2) (/ (switch-data :y) 2)) switch-padding)
+                                                      0]))
+                     cable (->> (-#(cylinder 4 50))
+                                (mirror [1 0 1])
+                                (translate [14 4 5]))
+                     bottom-slicer (-#(->> (cube (+ 1 x) (+ 10 y) z)
+                                           (translate [0 0 (- z)])
+                                           (translate [0 0 7.5])))
+                     right-slicer (-#(->> (cube (+ 1 x) (+ 10 y) (+ 11 z))
+                                          (translate [0 (- (- (/ y 2)) 1) 10])))
+                     angled-face-with-holes (difference angled-face switch-hole-low switch-hole-high bottom-slicer right-slicer cable)
+                     placed (translate [(button-tower-data :offset) 40 (+ 5.6 bottom-clearance)] angled-face-with-holes)]
+                 placed)
+        holder (->> (cube skeleton-width (/ ltrac-width 2) bottom-clearance)
+                    (translate [(+ (button-tower-data :offset) short-skeleton-arm-x 15) (/ ltrac-width 4) 0]))]
+    (union angled holder)))
 
 (def skeleton
   (union

@@ -28,8 +28,7 @@
 (defn myrender [model]
   (spit "things/cst_proto.scad" (write-scad model)))
 
-(defn caca []
-  (define-module 'rotate_about_point '[z y pt] ( translate pt)))
+;; (define-module 'rotate_about_point '[z y pt] ( translate pt))
 
 ;; module rotate_about_pt(z, y, pt) {
 ;;                                   translate(pt)
@@ -37,3 +36,22 @@
 ;;                                   translate(-pt)
 ;;                                   children();
 ;;                                   }
+
+(defn doPoly [l w h]
+  (translate [(- (/ l 2)) (- (/ w 2)) 0](polyhedron [[0 0 0]
+                                                     [l 0 0]
+                                                     [l w 0]
+                                                     [0 w 0] ; Bottom face
+                                                     [0 0 h] ; Top points
+                                                     [l 0 h]]
+                                                    [[0 1 2 3]
+                                                     [5 4 3 2]
+                                                     [0 4 5 1]
+                                                     [0 3 4]
+                                                     [5 2 1]])))
+
+(defn rotate-at-point [x y z point object]
+  (->> object
+       (translate point)
+       (rotate [x y z])
+       (translate (mapv #(- %) point))))

@@ -26,16 +26,15 @@
                             :size '(2 10 10)}})
 (def inner-distance-between-side-cross 60.80)
 (def switch-around-offset 8)
-(def switch-padding 3)
 (def switch-data {:x 14
                   :y 14
                   :z 5.1
                   :with-cap {:x 17.72 :y 16.63}})
+(def switch-x-padding (- (get-in switch-data [:with-cap :x]) (switch-data :x)))
+(def switch-y-padding (- (get-in switch-data [:with-cap :y]) (switch-data :y)))
 
-(def button-tower-data {:offset 20
-                        :size [10 5 3]
-                        :slope {:xyz [(+ switch-around-offset (* 2 (switch-data :y))) (+ switch-around-offset (* 2 (switch-data :y))) 30]}
-                        :tower {:xyz [10 5 30]}})
+(def button-tower-data {:offset 30
+                        :slope {:xyz [(+ switch-around-offset (* 2 (get-in switch-data [:with-cap :x]))) (+ switch-around-offset (* 2 (switch-data :y))) 30]}})
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Skeleton
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -94,13 +93,13 @@
                                                   (rotate [(- (/ pi 3)) 0 0]))
                       switch-hole-high       (->> (cube (switch-data :x) (switch-data :y) 70)
                                                   (rotate [(- (/ pi 3)) 0 0])
-                                                  (translate [(- (- switch-padding (- (/ x 2) (/ (switch-data :x) 2))))
-                                                              (- (- (- (/ y 2) (/ (switch-data :y) 2)) switch-padding))
+                                                  (translate [(- (- switch-x-padding (- (/ x 2) (/ (switch-data :x) 2))))
+                                                              (- (- (- (/ y 2) (/ (switch-data :y) 2)) switch-y-padding))
                                                               0]))
                       switch-hole-low        (->> (cube (switch-data :x) (switch-data :y) 70)
                                                   (rotate [(- (/ pi 3)) 0 0])
-                                                  (translate [(- switch-padding (- (/ x 2) (/ (switch-data :x) 2)))
-                                                              (- (- (/ y 2) (/ (switch-data :y) 2)) switch-padding)
+                                                  (translate [(- switch-x-padding (- (/ x 2) (/ (switch-data :x) 2)))
+                                                              (- (- (/ y 2) (/ (switch-data :y) 2)) switch-y-padding)
                                                               0]))
                       cable                  (->> (-# (cylinder 4 50))
                                                   (mirror [1 0 1])

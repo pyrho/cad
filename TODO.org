@@ -1,0 +1,75 @@
+#+TITLE: Computer Aided Design
+
+* CST buttons
+** Version 0.5
+*** Observations
+    It's fucked.. the front clip is not far enough, the side crosses are waaay off, 
+    the button tower is not offseted....
+*** Things to check
+    - [X] Back clip fit
+    - [X] Front clip fit
+    - [X] How ergo are the side buttons ? Position is good ?
+    - [X] Switch fit?
+    - [X] Crosses fit ?
+    - [X] Side Crosses distance ?
+** Version 0.6
+   Things to check:
+     - button tower
+     - crosses fit/pos
+     - front/back clips
+*** Fixes [6/6]
+**** DONE Buttons position
+     CLOSED: [2019-06-12 Wed 01:44]
+     Angle is too large, 10deg less would feel better
+**** DONE Switches fit
+     CLOSED: [2019-06-12 Wed 01:44]
+     Take measures from thingiverse model and compare with mine
+**** DONE Tower position
+     CLOSED: [2019-06-12 Wed 02:26]
+     Currently centered on the small arm. Should be offseted.
+     Find a way to center a new shape built from difference at origin.
+     Maybe export as STL and import again ? That sucks but I'm not sure how to do it otherwise..
+     Also make the switch holes before rotating the angled face.
+**** DONE Front clip
+     CLOSED: [2019-06-11 Tue 01:34]
+     Front clip not reaching far enough
+     Did not account for the width of the back clip.
+     Moving the upwards arms after the end of the X axis skeleton
+     arm should solve the issue, because the X axis seems to have
+     perfect measures.
+     This fixes the front clip too, same issue.
+**** DONE Back clip
+     CLOSED: [2019-06-11 Tue 01:34]
+**** DONE Sides crosses too far from holes
+     CLOSED: [2019-06-11 Tue 01:34]
+** Version 0.7
+*** Things to fix
+**** DONE Supports fucked
+     CLOSED: [2019-06-13 Thu 01:20]
+     - Could not test back clip as it broke with the support
+     - Switches mount supports did not come off either..
+     + Print with the tower flat
+**** +TODO Front clip is maybe 1mm too close to edge+
+     I think it's because the top cross doesnt fit.
+**** DONE Side crosses are fucked still
+     CLOSED: [2019-06-14 Fri 01:28]
+     A fix could be to have seperate offsets
+**** +TODO Make switch holes 1mm bigger (so 0.5 on each side)+
+     I think the size is good, it's just that the print was fucked on the holes.
+     But with a fixed print it should fit perfectly.
+**** DONE Button tower is 0.3mm too high from the skeleton
+     CLOSED: [2019-06-14 Fri 01:36]
+**** DONE Buttons collide with each other with the keycaps on
+     CLOSED: [2019-06-14 Fri 01:58]
+**** DONE side crosses a bit shallower
+     CLOSED: [2019-06-14 Fri 01:28]
+**** DONE front cross still does not fit in.., make it narrower
+     CLOSED: [2019-06-14 Fri 01:28]
+** Version 0.8
+*** Things to fix
+**** TODO Front clip floating in void..
+**** TODO Top button too far
+     Top button pos would be ok at current low button pos 
+**** TODO top cross doesnt go in..
+**** TODO sides crosses do not fit
+

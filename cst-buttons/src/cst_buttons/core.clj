@@ -196,3 +196,58 @@
 ;;points=[[0,0,0], [l,0,0], [l,w,0], [0,w,0], [0,w,h], [l,w,h]],
 ;;faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
 ;;);
+
+
+; Tut from https://hackaday.com/2018/02/13/openscad-tieing-it-together-with-hull/
+;; (def points [[0 0 0] [30 0 0] [0 30 0] [30 30 0]])
+
+;; (defn cylinders [points diameter thickness]
+;;   (map #(translate % (-#(cylinder (/ diameter 2) thickness))) points))
+
+;; (defn plate [points diameter thickness hole-diameter]
+;;   (difference
+;;    (hull (cylinders points diameter thickness))
+;;    (cylinders points hole-diameter (+ 1 thickness))))
+
+;; (defn bar [length width thickness hole-diameter]
+;;   (plate [ [0 0 0] [length 0 0]] width thickness hole-diameter))
+
+; Attempt at a curve
+(def curvebase
+  (translate [2 -2 0] (rotate [0 pi 0] (import "/home/pyrho/Downloads/CST_2-Switch_Housing.stl"))))
+(def reference-points [
+
+             [0 0 0] ;origin
+
+                       [-145 0 0] ;back
+
+             [-98 20 0] ;mid-back
+             [-48 29 0] ;mid-front
+             [0 19 0] ;front
+
+             ])
+
+(def x (loop [res []
+              lpoints reference-points]
+         (if (vector? lpoints)
+           (recur (conj (first lpoints) [1 1 1]) (rest lpoints) )
+           res)))
+x
+
+(rest reference-points)
+(conj (first [[0 0 0]]) [1 1 1])
+
+(defn place-points [points]
+  (color [1 0 0 1] (map #(translate % (cylinder 1 10)) points)))
+
+
+(def all
+  ;; (union curvebase (place-points reference-points)))
+  (union curvebase (place-points reference-points)))
+
+(->> all
+     (write-scad)
+     (spit "things/cst_proto.scad"))
+
+
+(vector? (rest [1]))

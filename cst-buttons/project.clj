@@ -5,5 +5,4 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [scad-clj "0.5.3"]]
-  :plugins [[lein-environ "1.0.0"]]
-  :profiles {:dev { :env {:squiggly {:checkers [:eastwood :kibit :typed]}}}})
+  :plugins [[lein-environ "1.0.0"]])

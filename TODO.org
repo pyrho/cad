@@ -67,9 +67,11 @@
      CLOSED: [2019-06-14 Fri 01:28]
 ** Version 0.8
 *** Things to fix
-**** TODO Front clip floating in void..
+**** DONE Front clip floating in void..
+     CLOSED: [2019-06-15 Sat 16:30]
 **** TODO Top button too far
      Top button pos would be ok at current low button pos 
-**** TODO top cross doesnt go in..
+**** TODO top cross doesnt go in
 **** TODO sides crosses do not fit
-
+*** Ideas     
+**** Use the file from thingiverse to model the curve

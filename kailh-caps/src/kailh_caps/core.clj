@@ -22,13 +22,20 @@
   "The x length of the top of the keycap"
   14.3)
 
+;; (def cap-1u-y-bottom
+;;   "The y length at bottom"
+;;   16.6)
+
+;; (def cap-1u-y-top 13)
 (def cap-1u-y-bottom
   "The y length at bottom"
-  16.6)
+  cap-1u-x-bottom)
 
-(def cap-1u-y-top 13)
+(def cap-1u-y-top cap-1u-x-top)
 
-(def cap-z 3.5)
+(def cap-z
+  "The original caps are `3.5`"
+  4.5)
 
 (defmacro def-cap-size
   "Create all the bindings for cap sizes for a given Unit"
@@ -48,7 +55,7 @@
 
 (defn thingi-1
   []
-  (translate [-10 0 0] (rotate [(-(/ pi 2)) 0 0] (import "/Users/damien/Downloads/Low_Profile_Spherical_Keycap_v2.stl"))))
+  (translate [-10 0 0] (rotate [(- (/ pi 2)) 0 0] (import "/Users/damien/Downloads/Low_Profile_Spherical_Keycap_v2.stl"))))
 
 (defn thingi-2
   []
@@ -66,30 +73,71 @@
         mid-z (/ (get prong-dimensions 2) 2)]
     (translate [(- mid-x)
                 0
-                (+ (-(/ (get prong-dimensions 2) 2)) (- cap-z cap-thickness))]
+                (- (+ (- (/ (get prong-dimensions 2) 2)) (- cap-z cap-thickness)) 2)]
                (union left right))))
 
-(def make-1u
-  "Make a 1u keycap.
-  A hull of the bottom and top parts is made.
-  Then a smaller hull is made, offseted by `cap-thickness`, the difference is taken to make the cap.
-  "
-  (let [hull-plate-z 0.01
-        outer        (let [bottom (cube cap-1u-x-bottom cap-1u-y-bottom hull-plate-z)
-                           top    (translate [0 0 cap-z] (cube cap-1u-x-top cap-1u-y-top hull-plate-z))]
-                       (hull bottom top))
-        inner        (let [bottom        (cube (- cap-1u-x-bottom cap-thickness) (- cap-1u-y-bottom cap-thickness) hull-plate-z)
-                           bottom-placed (translate [0 0 -1] bottom)
-                           top           (cube (- cap-1u-x-top cap-thickness) (- cap-1u-y-top cap-thickness) hull-plate-z)
-                           top-placed    (translate [0 0 (- cap-z cap-thickness)] top)]
-                       (hull bottom-placed top-placed))]
-    (difference outer inner)))
+(defn make-dsa
+  ""
+  [& {:keys [top bottom x-angle y-angle depth] :or {x-angle 0 y-angle 0}}]
+  (let [sliver            0.0001
+        make-rounded-cube (fn [x y z radius] (minkowski
+                                              (cube (- x (* 2 radius)) (- y (* 2 radius)) (- z sliver))
+                                              (cylinder radius sliver)))
+        get-dish-radus    (fn [width depth] (/ (+ (* width width) (* 4 depth depth)) (* 8 depth)))
+        bottom-plate      (with-fs 0.1 (make-rounded-cube (bottom :x) (bottom :y) 0.01 0.5))
+        top-plate         (with-fs 0.1 (->> (make-rounded-cube (top :x) (top :y) 0.01 3)
+                                            (rotate [(deg->rad x-angle) (deg->rad y-angle) 0])
+                                            (translate [0 0 cap-z])))
+        dish-maker-y      (->> (with-fn 100 (cylinder (get-dish-radus (top :x) depth) 60))
+                               (rotate [(/ pi 2) 0 0])
+                               (translate [0 0 (- (get-dish-radus (top :x) depth) depth)])
+                               (rotate [(deg->rad x-angle) (deg->rad y-angle) 0])
+                               (translate [0 0 cap-z]))
+        dish-maker-x      (->> (with-fn 100 (cylinder (get-dish-radus (top :x) depth) 60))
+                               (rotate [(/ pi 2) 0 (/ pi 2)])
+                               (translate [0 0 (- (get-dish-radus (top :x) depth) depth)])
+                               (rotate [(deg->rad x-angle) (deg->rad y-angle) 0])
+                               (translate [0 0 cap-z]))
+        dish-maker-sphere (->> (with-fn 100 (sphere (get-dish-radus (* (top :x) (Math/sqrt 2)) depth)))
+                               (scale [1 2.1 1])
+                               (translate [0 0 (- (get-dish-radus (* (top :x) (Math/sqrt 2)) depth) depth)])
+                               (rotate [(deg->rad x-angle) (deg->rad y-angle) 0])
+                               (translate [0 0 cap-z]))
+        cap               (difference (hull top-plate bottom-plate) dish-maker-sphere)
+        bottom-plate-inner (with-fs 0.1 (->> (make-rounded-cube (- (bottom :x) cap-thickness) (- (bottom :y) cap-thickness) 0.01 0.5)
+                                             (translate [0 0 -1])))
+        top-plate-inner (with-fs 0.1
+                          (->> (make-rounded-cube (- (top :x) cap-thickness) (- (top :y) cap-thickness) 0.01 3)
+                               (translate [0 0 (- cap-z cap-thickness)])
+                               (rotate [(deg->rad x-angle) (deg->rad y-angle) 0])))
+        cap-inner (difference (hull top-plate-inner bottom-plate-inner) (translate [0 0 (- cap-thickness)] dish-maker-sphere))
+        left-prong (let [x-offset 0
+                         top-plate (->> (cube (get prong-dimensions 0) (get prong-dimensions 1) 0.01)
+                                                        (translate [x-offset 0 5]))
+                         bottom-plate (->> (cube (get prong-dimensions 0) (get prong-dimensions 1) 0.01)
+                                           (translate [x-offset 0 cap-z])
+                                           (translate [0 0 -3])
+                                           (translate [0 0 (- (get prong-dimensions 2))]))]
+                     (color [0 1 0] (hull top-plate bottom-plate)))
+        right-prong (let [x-offset distance-between-prong-centers
+                         top-plate (->> (cube (get prong-dimensions 0) (get prong-dimensions 1) 0.01)
+                                        (translate [x-offset 0 5]))
+                         bottom-plate (->> (cube (get prong-dimensions 0) (get prong-dimensions 1) 0.01)
+                                           (translate [x-offset 0 cap-z])
+                                           (translate [0 0 -3])
+                                           (translate [0 0 (- (get prong-dimensions 2))]))]
+                      (color [0 1 0] (hull top-plate bottom-plate)))
+        prongs (difference (translate [(- (/ distance-between-prong-centers 2)) 0 0] (union left-prong right-prong))dish-maker-sphere )]
+    (union prongs (difference cap cap-inner))))
 
 (def spit-scad
-  (spit "resources/out.scad" (s/write-scad (union
-                                            make-1u
-                                            place-prongs
-                                            ))))
+  (spit "resources/out.scad" (write-scad (union
+                                          (make-dsa :top {:x cap-1u-x-top :y cap-2u-y-top}
+                                                    :bottom {:x cap-1u-x-bottom :y cap-2u-y-bottom}
+                                                    :y-angle 10
+                                                    :depth 1.5)
+                                          ;; place-prongs
+                                          ))))
 
 spit-scad
 

@@ -52,6 +52,7 @@
 
 (def-cap-size 2 "2")
 (def-cap-size 1.5 "1point5")
+(def-cap-size 1.25 "1point25")
 
 (defn thingi-1
   []
@@ -171,8 +172,16 @@
                                :depth 1.5
                                :height cap-z))
 
+(def thumb-1point25u (make-dsa :top {:x cap-1point25u-x-top :y cap-1u-y-top}
+                               :bottom {:x cap-1point25u-x-bottom :y cap-1u-y-bottom}
+                               :y-angle 0
+                               :x-angle 5
+                               :depth 1.5
+                               :height cap-z))
+
+
 ;; (spit-scad "out" (union (translate [-25 0 0] oneU) outter-1point5u))
-(spit-scad "outer-1point5u") outter-1point5u
+(spit-scad "1point25u" thumb-1point25u)
 ;; (spit-scad "2u-thumb-1" thumb-2u-1)
 
 ;; (spit-scad "2u-thumb-2" thumb-2u-2)

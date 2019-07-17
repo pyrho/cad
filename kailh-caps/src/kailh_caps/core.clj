@@ -9,7 +9,7 @@
 
 (def prong-dimensions
   "The x y z dimensions of one prong that go into the stem"
-  [1.2 2.9 3])
+  [1 2.8 3])
 
 (def distance-between-prong-centers
   "The x distance between the middle of each prongs"

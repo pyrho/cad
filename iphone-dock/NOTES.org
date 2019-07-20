@@ -1,0 +1,24 @@
+#+TITLE: Notes
+
+* Version issues
+** 0.0.1 issues [4/4]
+*** DONE Connector hole is to narrow
+    It should also take into account the fact that the connector is angled.
+*** DONE Cannot fit dock inside
+    Printing with supports under the dock shell is a bad idea
+*** DONE iPhone holder too big
+    Like almost x2 too big...
+*** DONE Very tight fit for the dock
+      Maybe add a millimeter
+** 0.0.2 issues [0/3]
+*** TODO guide & hole too far behind
+*** TODO iphone sits too high
+    the charging does not happen because the connector is not going deep enough.
+    Make a hole on the x axis.
+*** TODO Leave hole for home button
+*** TODO Give it 2mm more on the side of the guide
+*** TODO Make the guide slightly more angled
+    Like 3 deg.
+*** TODO Guide is too wide.
+    Retry the minkowski method.
+    =10+2+2 = 14= with a 10 cube  and a 2 rs cylinder

@@ -1,58 +1,60 @@
-;;;;;;;;; Notes 
-;;; #+BEGIN_SRC emacs-lisp
-;;; 0.0.1
-;; - [ ] connector hole 
-;;; #+END_SRC
 (ns iphone-dock
   (:require [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all]))
 
 ;;;;;; Constants
 (def iphone-corner-radius (/ 19 2))
-(def cover-side-radius (/ 15 2))
+
+;; It's actually a bit tighter than that (11), but it
+;; won't matter if there's a bit more space.
+(def cover-side-radius (/ 14 2))
 
 (def dock-corner-radius (/ 20 2))
 
 (def dock-size-offset
-  "The fit is a bit too tight with the exact mesures, this allows for some space"
+  "The fit is a bit too tight with the exact mesures, this allows for some space.
+  0.5 is perfect."
   0.5)
 
-(def fn 100)
+(def fn 50)
+(def fs 0.1)
 
 (def dock-z (+ dock-size-offset 7.5))
 (def dock-x (+ dock-size-offset 67.16))
 (def dock-y (+ dock-size-offset 48.4))
 
+(def iphone-nth-of-bottom 20)
+; Home button data
+(def home-button-distance-from-bottom 4.5)
+(def home-button-radius (/ 12 2))
+
 (def bottom-lip 1.5)
-(def thickness
-  "This defines the thickness of the shell that will surround the dock.
-   It is used as an increment to the dock's size."
-  2.5)
+
+(def layer-height 0.2)
+(def thickness (* layer-height 7))
 
 (def widen-connector-dim-by 5)
-(def connector-dim {:x (+ 12 widen-connector-dim-by) :y (+ 7 widen-connector-dim-by)})
+(def connector-dim {:x (+ 12 widen-connector-dim-by)
+                    :y (+ 7 widen-connector-dim-by)})
 (def iphone-dim
   "Without the cover"
   {:x 67.25
    :y 138.17 ;this is not important, the guide does nott go all the way up
    :z 7.2})
-(def iphone-dim-x-offset 8)
-(def iphone-dim-offset 0)
 (def iphone-dim-slim-cover
   "Without the cover"
-  {:x (+ 70.25 iphone-dim-x-offset)
-   :z (+ 9.2 iphone-dim-offset)})
+  {:x 70.25
+   :y 138.17
+   :z 9.2})
 
 ;;;;; Shape generation
 
 (defn create-dock-shape
   "This is the actual shape of the dock. It will be used to hollow out the
    outer shell."
-  [x y z rs isRound?]
+  [x y z rs]
 
-  (let [a-corner (if isRound?
-                   (with-fn fn (sphere rs))
-                   (extrude-linear {:center false :height z} (with-fn fn (circle rs))))
+  (let [a-corner (extrude-linear {:center false :height z} (with-fn fn (circle rs)))
         front-y-trslt (- (/ y 2) rs)
         front-x-trslt (- rs (/ x 2))
         front-L-corner (translate [front-x-trslt (- front-y-trslt) 0]
@@ -71,81 +73,75 @@
           back-L-corner)))
 
 (defn create-iphone-shape
-  ""
-  [x y z rs]
-  (create-dock-shape
-   x
-   y
-   z
-   rs
-   true))
-
+  "Note: we don't need to z size because the radius of the side de-facto sets
+  the height of the iphone."
+  [extra-thickness]
+  (let [r2                    (+ extra-thickness cover-side-radius)
+        r1                    iphone-corner-radius
+        ix                    (+ extra-thickness (iphone-dim-slim-cover :x))
+        iy                    (+ extra-thickness (iphone-dim-slim-cover :y))
+        a-corner              (call :torus r1 r2)
+        get-torus-coord-for   #(- (/ % 2) (+ r1 r2))
+        torus-top-coord       (get-torus-coord-for ix)
+        torus-right-coord     (get-torus-coord-for iy)
+        torus-top-right-coord [torus-top-coord torus-right-coord 0]]
+    (->> a-corner
+         ;; Place it on the top right corner (relative to top view)
+         (translate torus-top-right-coord)
+         ;; Copy it along the x/y axis to create the 4 cornes of the iPhone
+         (call-module-with-block :reflect)
+         ;; Join all 4 corners to create the shape
+         (hull))))
 ;;;;; Shapes
-(def dock-shell
-  (let [outer-dim {:x (+ thickness dock-x) :y (+ thickness dock-y) :z (+ thickness dock-z)}
-        dock-inner (create-dock-shape dock-x dock-y dock-z dock-corner-radius false)
-        dock-outer (create-dock-shape (outer-dim :x) (outer-dim :y) (outer-dim :z) dock-corner-radius false)
+(def iphone-shape (create-iphone-shape 0))
+(def iphone-thicker-shape (create-iphone-shape thickness))
+(def hollow-iphone-shape (difference iphone-thicker-shape iphone-shape))
+(def only-bottom-of-iphone-shape
+  (difference
+   (intersection
+    hollow-iphone-shape
+    (let [b (/ (iphone-dim-slim-cover :y) iphone-nth-of-bottom)
+          a (- (/ (iphone-dim-slim-cover :y) 2) (/ b 2))]
+      (-#(translate [0 (- a) 0]
+                    (cube (+ (iphone-dim-slim-cover :x) 10)
+                          b
+                          (+ (iphone-dim-slim-cover :z) 100))))))
+   (let [a (- (/ (iphone-dim-slim-cover :y) 2) (+ cover-side-radius) (/ home-button-radius 2))]
+     (-# (translate
+          [0 (- a) 10]
+          (cylinder home-button-radius 20))))))
 
-        ;; The y coordinates of the front edge
-        y-edge (- (connector-dim :y) (/ dock-y 2) 3)
+(def dock-shell
+  (let [outer-dim  {:x (+ thickness dock-x) :y (+ thickness dock-y) :z (+ thickness dock-z)}
+        dock-inner (create-dock-shape dock-x dock-y dock-z dock-corner-radius)
+        dock-outer (create-dock-shape (outer-dim :x) (outer-dim :y) (outer-dim :z) dock-corner-radius)
 
         ;; The distance between the edge and the start of the connector
-        connector-y-edge-distance 3.8
+        connector-y-edge-distance 4
 
-        hllwr-y (+ y-edge connector-y-edge-distance)
-        connector-hollower (translate [0 hllwr-y 0] ;3.8 from front edge inner
-                                      (cube (connector-dim :x) (connector-dim :y) 30))
-        back-hollower (translate [0 (/ dock-y 2) 0]
-                                 (cube (- (+ 3 (outer-dim :x)) 0) 5 (+ 3 (outer-dim :z))))
-        guide (let [x (- (iphone-dim-slim-cover :x) (/ iphone-corner-radius 2))
-                    y (- 30 (/ iphone-corner-radius 2))
-                    z (+ 10 (- (iphone-dim-slim-cover :z) (/ iphone-corner-radius 2)))
-
-                    iphone (create-iphone-shape x y z iphone-corner-radius)
-
-                    hllwr (translate [0 0 0] ;[(- (/ thickness 2)) (- (/ thickness 2)) (- (/ thickness 2))]
-                                     (create-iphone-shape
-                                      (- x thickness)
-                                      (- y thickness)
-                                      (- z thickness)
-                                      (- iphone-corner-radius (/ thickness 2))))
-
-                    shell (difference iphone hllwr)
-
-        ;; Hollow out the combined part instead, this will allows to
-        ;; incorporatethe angle.
-         connector-hollower (translate [0 0 0]
-                                       (-#(cube (connector-dim :x) 30 (connector-dim :y))))
-                    cut (translate [0 20 0] (cube 120 30 80))
-        ;whole (difference shell cut connector-hollower)
-                    whole (difference shell cut)]
-                (rotate [(/ pi 2) 0 0] whole))
-        shell (difference
-               (union (let [magicnr 20]
-                        (->> guide
-                             (translate [0 (- (/ dock-y 2) (/ (iphone-dim-slim-cover :x) 2)) magicnr])
-                             (rotate [(- (/ pi 30)) 0 0])))
-                      dock-outer)
-               (-# dock-inner))]
+        a (+ (- (/ dock-y 2) (/ (connector-dim :y) 2) (+ thickness connector-y-edge-distance)))
+        connector-hollower (translate [0  a 0] ;3.8 from front edge inner
+                                                    (-#(cube (+ (connector-dim :x) 0) (+ 0 (connector-dim :y)) 30)))
+        back-hollower      (translate [0 (/ dock-y 2) 0]
+                                      (cube (- (+ 3 (outer-dim :x)) 0) 5 (+ 3 (outer-dim :z))))
+        shell              (difference
+                            (union (let [magicnr 15]
+                                     (->> only-bottom-of-iphone-shape
+                                          (translate [0 (- (/ dock-y 2) (/ (iphone-dim-slim-cover :x) 2) 6) magicnr])
+                                          (rotate [(- (/ pi 25)) 0 0])))
+                                   dock-outer)
+                            (-# dock-inner))]
     (difference shell
                 ;; Hollow out the combined part instead, this will allows to
                 ;; incorporatethe angle.
                 connector-hollower
                 back-hollower)))
 
-;(difference
-     ;; (translate [0 -20 33]
-     ;;            (rotate [(/ pi 2) 0 0]
-     ;;                    (difference iphone hllwr cut)))
-     ;; connector-hollower)
-
-
+(def iphone-ref (cube (iphone-dim-slim-cover :x) (iphone-dim-slim-cover :y) (iphone-dim-slim-cover :z)))
 (def ruler (translate [0 0 0] (cube (iphone-dim-slim-cover :x) dock-y dock-z)))
 ;;;;; Output
 (def all
   (union
-   ;; These are magic numbers..
-   ;; (translate [0 4 20] (rotate [(- (/ pi 30)) 0 0] iphone7-guide))
    dock-shell
    ;; ruler
    ))
@@ -156,26 +152,12 @@
 ; The dimensions look waaay too big in cura..
 
 
-(spit (str "resources/" "out.scad") (write-scad all))
+(spit
+ (str "resources/" "out.scad")
+ (write-scad [(include "BH-Lib/all.scad")
+              all
+              (fn! fn)
+              ]))
 
 
 ;;;; Playground
-  ;; (minkowski (create-dock-shape 70.2 30 9.2 cover-side-radius)
-  ;;            (sphere 7)) ;with slim cover
-
-;; (union
-;;  (create-dock-shape dock-x dock-y dock-z dock-corner-radius)
-;;  ruler)
-
-;; (difference (rotate [(/ pi 2) 0 0]
-;;                     (create-dock-shape
-;;                      (iphone-dim-slim-cover :x)
-;;                      (iphone-dim-slim-cover :z)
-;;                      2
-;;                      iphone-corner-radius
-;;                      true))
-;;             (translate [0 0 10]
-;;                        (cube
-;;                         (iphone-dim-slim-cover :x)
-;;                         40
-;;                         (iphone-dim-slim-cover :z))))

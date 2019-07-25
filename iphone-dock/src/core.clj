@@ -3,11 +3,10 @@
             [scad-clj.scad :refer :all]))
 
 ;;;;;; Constants
-(def iphone-corner-radius (/ 19 2))
 
 ;; It's actually a bit tighter than that (11), but it
 ;; won't matter if there's a bit more space.
-(def cover-side-radius (/ 14 2))
+(def cover-side-radius (/ 12 2))
 
 (def dock-corner-radius (/ 20 2))
 
@@ -17,13 +16,13 @@
   0.5)
 
 (def fn 50)
-(def fs 0.1)
+(def fs 1)
 
 (def dock-z (+ dock-size-offset 7.5))
 (def dock-x (+ dock-size-offset 67.16))
 (def dock-y (+ dock-size-offset 48.4))
 
-(def iphone-nth-of-bottom 20)
+(def iphone-nth-of-bottom 15)
 ; Home button data
 (def home-button-distance-from-bottom 4.5)
 (def home-button-radius (/ 12 2))
@@ -31,9 +30,9 @@
 (def bottom-lip 1.5)
 
 (def layer-height 0.2)
-(def thickness (* layer-height 7))
+(def thickness (+ tolerance (* layer-height 7)))
 
-(def widen-connector-dim-by 5)
+(def widen-connector-dim-by 0.5)
 (def connector-dim {:x (+ 12 widen-connector-dim-by)
                     :y (+ 7 widen-connector-dim-by)})
 (def iphone-dim
@@ -41,11 +40,23 @@
   {:x 67.25
    :y 138.17 ;this is not important, the guide does nott go all the way up
    :z 7.2})
+
+(def iphone-corner-radius
+  "The corner of the iphone with the cover."
+  (/ 20 2))
+
+(def iphone-shell-corner-radius
+  "Make the corner of the inside of the shell where the iphone will be standing
+  a bit broader so that it's easier to fit the phone in."
+  (- iphone-corner-radius 4))
+
+(def tolerance 0.5)
+
 (def iphone-dim-slim-cover
-  "Without the cover"
-  {:x 70.25
-   :y 138.17
-   :z 9.2})
+  "With the cover"
+  {:x (+ tolerance 70.25)
+   :y (+ tolerance 138.40)
+   :z (+ tolerance 9.2)})
 
 ;;;;; Shape generation
 
@@ -72,30 +83,78 @@
           back-R-corner
           back-L-corner)))
 
-(defn create-iphone-shape
-  "Note: we don't need to z size because the radius of the side de-facto sets
-  the height of the iphone."
-  [extra-thickness]
-  (let [r2                    (+ extra-thickness cover-side-radius)
-        r1                    iphone-corner-radius
-        ix                    (+ extra-thickness (iphone-dim-slim-cover :x))
-        iy                    (+ extra-thickness (iphone-dim-slim-cover :y))
-        a-corner              (call :torus r1 r2)
-        get-torus-coord-for   #(- (/ % 2) (+ r1 r2))
-        torus-top-coord       (get-torus-coord-for ix)
-        torus-right-coord     (get-torus-coord-for iy)
-        torus-top-right-coord [torus-top-coord torus-right-coord 0]]
-    (->> a-corner
-         ;; Place it on the top right corner (relative to top view)
-         (translate torus-top-right-coord)
-         ;; Copy it along the x/y axis to create the 4 cornes of the iPhone
+(defn iphonev2 [extra]
+  (let [corner-radius iphone-corner-radius
+        ;; I have no idea why substracting half of the height works here.....
+        r1            (+ extra (- corner-radius (/ (iphone-dim-slim-cover :z) 2)))
+
+        ;; Nor do I know why r2 should be half of the height, but it works...
+        r2            (+ extra (/ (iphone-dim-slim-cover :z) 2))
+        corner        (call :torus r1 r2)
+        bottom-left-y (- (+ (/ (iphone-dim-slim-cover :y) 2) 0))
+        bottom-left-x (- (+ (/ (iphone-dim-slim-cover :x) 2) 0))
+        torus-offset  (+ r1 r2)]
+    (->> corner
+         (translate [bottom-left-x bottom-left-y 0])
+         (translate [torus-offset torus-offset 0])
          (call-module-with-block :reflect)
-         ;; Join all 4 corners to create the shape
          (hull))))
+
 ;;;;; Shapes
-(def iphone-shape (create-iphone-shape 0))
-(def iphone-thicker-shape (create-iphone-shape thickness))
-(def hollow-iphone-shape (difference iphone-thicker-shape iphone-shape))
+(defn iphone-ref2 [ & [offset]]
+  (cube (iphone-dim-slim-cover :x)
+        (iphone-dim-slim-cover :y)
+        (iphone-dim-slim-cover :z)))
+
+(defn iphone-ref [ & [offset]]
+  "THis is from the iphone case from github "
+  (let [offset (or offset 0)
+        dim0 (iphone-dim-slim-cover :y)
+        dim1 (iphone-dim-slim-cover :x)
+        dim2 (iphone-dim-slim-cover :z)
+        corner-rad iphone-corner-radius
+        r1 (+ (- corner-rad (/ dim2 2)) offset)
+        r2 (+ (/ dim2 2) offset)]
+    (->> (call :torus_true r1 r2)
+         (translate [(- (/ dim0 2) corner-rad) (- (/ dim1 2) corner-rad) 0])
+         (call-module-with-block :reflect)
+         (hull))))
+
+(defmacro three-x-vec [x] [x x x])
+
+(def hollow-iphone-shape
+  (let [thicker-scale-factor      1.1
+        raise-up                  #(rotate [(/ pi 2) 0 0] %)
+        iphone-shape              (translate [0 0 (/ (iphone-dim-slim-cover :y) 2)] (raise-up (iphonev2 tolerance)))
+        block-z                   (+ home-button-distance-from-bottom home-button-radius)
+        connector-hollower        (-#(cube (+ (connector-dim :x) 0) (+ 0 (connector-dim :y)) 30))
+        block                     (translate [0 0 (/ block-z 2)]
+                                             (cube (+ thickness (iphone-dim-slim-cover :x))
+                                                   (+ thickness (iphone-dim-slim-cover :z))
+                                                   block-z
+                                        ;(+ thickness (iphone-dim-slim-cover :y))
+                                                   ))
+        home-button-mask          (let [h      (+ thickness (iphone-dim-slim-cover :z))
+                                        z-zero (+ home-button-distance-from-bottom home-button-radius)
+                                        x-zero (- (/ (iphone-dim-slim-cover :y) 2) (+ cover-side-radius) (/ home-button-radius 2))]
+                                    (translate [0 (- h 1) z-zero]
+                                               (rotate [(/ pi 2) 0 0]
+                                                       (-# (cylinder home-button-radius
+                                                                     h)))))
+        button-hollower           (-# (cylinder home-button-radius 10))]
+
+    (difference
+     (difference block iphone-shape)
+     home-button-mask
+     connector-hollower
+     ;iphone-mask
+     )
+    ))
+
+(def iphone-shape-mask
+  (translate [0 0 (/ (* (+ 1 thicker-scale-factor) (iphone-dim-slim-cover :y)) 2)]
+             (-# iphone-thicker-shape2)))
+
 (def only-bottom-of-iphone-shape
   (difference
    (intersection
@@ -103,9 +162,9 @@
     (let [b (/ (iphone-dim-slim-cover :y) iphone-nth-of-bottom)
           a (- (/ (iphone-dim-slim-cover :y) 2) (/ b 2))]
       (-#(translate [0 (- a) 0]
-                    (cube (+ (iphone-dim-slim-cover :x) 10)
+                    (cube (+ (iphone-dim-slim-cover :x) 1)
                           b
-                          (+ (iphone-dim-slim-cover :z) 100))))))
+                          (+ (iphone-dim-slim-cover :z) 10))))))
    (let [a (- (/ (iphone-dim-slim-cover :y) 2) (+ cover-side-radius) (/ home-button-radius 2))]
      (-# (translate
           [0 (- a) 10]
@@ -137,13 +196,20 @@
                 connector-hollower
                 back-hollower)))
 
-(def iphone-ref (cube (iphone-dim-slim-cover :x) (iphone-dim-slim-cover :y) (iphone-dim-slim-cover :z)))
+;(def iphone-ref (cube (iphone-dim-slim-cover :x) (iphone-dim-slim-cover :y) (iphone-dim-slim-cover :z)))
 (def ruler (translate [0 0 0] (cube (iphone-dim-slim-cover :x) dock-y dock-z)))
 ;;;;; Output
+
 (def all
   (union
-   dock-shell
-   ;; ruler
+   ;(translate [0 0 -30] (rotate [0 0 (/ pi 2)] (iphone-ref 5)))
+   ;; (translate [0 0 -10] (-%(iphone-ref2 0)))
+   ;(translate [00  0 -10] only-bottom-of-iphone-shape)
+   ;; (iphonev2 tolerance)
+   ;; (translate [0 0 10] (scale [1.05 1.05 1.05] (iphonev2 tolerance)))
+   ;; ;; (translate [0 0 10] (iphonev2 (+ thickness tolerance)))
+   hollow-iphone-shape
+   ;; ;; ruler
    ))
 
 

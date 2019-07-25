@@ -13,3 +13,8 @@ pom.xml.asc
 .hg/
 */things
 .eastwood
+/hand-base/resources/fillets3d.scad
+/iphone-dock/.cpcache/1290378702.cp
+/iphone-dock/.cpcache/1290378702.libs
+/*.cp
+/iphone-dock/.cpcache/1940429693.cp

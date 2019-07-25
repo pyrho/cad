@@ -10,15 +10,35 @@
     Like almost x2 too big...
 *** DONE Very tight fit for the dock
       Maybe add a millimeter
-** 0.0.2 issues [0/3]
+** 0.0.2 issues [4/7]
 *** TODO guide & hole too far behind
 *** TODO iphone sits too high
     the charging does not happen because the connector is not going deep enough.
-    Make a hole on the x axis.
+    Make a hole along the x axis.
 *** TODO Leave hole for home button
-*** TODO Give it 2mm more on the side of the guide
-*** TODO Make the guide slightly more angled
+*** +Give it 2mm more on the side of the guide+
+    See below, thickness was fucked
+*** DONE Make the guide slightly more angled
     Like 3 deg.
-*** TODO Guide is too wide.
+*** DONE Guide is too wide.
     Retry the minkowski method.
     =10+2+2 = 14= with a 10 cube  and a 2 rs cylinder
+*** DONE Guide hollower was the other way around..
+    The thickness needed to be added .
+    
+* Seperate tests
+** Phone guide
+*** 0.1
+    like way too small...
+*** 0.2
+**** Changes 
+     - Fixed the torus radius.
+     - Made the outside square.
+**** Issues
+     - z axis is too tight, but the rest looks fine!
+     - try making the wall a bit thinner
+*** 0.3
+**** Changes 
+     - Fixed phone depth
+     - walls made thiner
+     - No issues !

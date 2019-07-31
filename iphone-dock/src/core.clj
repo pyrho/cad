@@ -3,6 +3,7 @@
             [scad-clj.scad :refer :all]))
 
 ;;;;;; Constants
+(def tolerance 0.5)
 
 ;; It's actually a bit tighter than that (11), but it
 ;; won't matter if there's a bit more space.
@@ -15,7 +16,7 @@
   0.5 is perfect."
   0.5)
 
-(def fn 50)
+(def fn 80)
 (def fs 1)
 
 (def dock-z (+ dock-size-offset 7.5))
@@ -50,7 +51,6 @@
   a bit broader so that it's easier to fit the phone in."
   (- iphone-corner-radius 4))
 
-(def tolerance 0.5)
 
 (def iphone-dim-slim-cover
   "With the cover"
@@ -122,79 +122,126 @@
 
 (defmacro three-x-vec [x] [x x x])
 
-(def hollow-iphone-shape
-  (let [thicker-scale-factor      1.1
-        raise-up                  #(rotate [(/ pi 2) 0 0] %)
-        iphone-shape              (translate [0 0 (/ (iphone-dim-slim-cover :y) 2)] (raise-up (iphonev2 tolerance)))
-        block-z                   (+ home-button-distance-from-bottom home-button-radius)
-        connector-hollower        (-#(cube (+ (connector-dim :x) 0) (+ 0 (connector-dim :y)) 30))
-        block                     (translate [0 0 (/ block-z 2)]
-                                             (cube (+ thickness (iphone-dim-slim-cover :x))
-                                                   (+ thickness (iphone-dim-slim-cover :z))
-                                                   block-z
-                                        ;(+ thickness (iphone-dim-slim-cover :y))
-                                                   ))
-        home-button-mask          (let [h      (+ thickness (iphone-dim-slim-cover :z))
-                                        z-zero (+ home-button-distance-from-bottom home-button-radius)
-                                        x-zero (- (/ (iphone-dim-slim-cover :y) 2) (+ cover-side-radius) (/ home-button-radius 2))]
-                                    (translate [0 (- h 1) z-zero]
-                                               (rotate [(/ pi 2) 0 0]
-                                                       (-# (cylinder home-button-radius
-                                                                     h)))))
-        button-hollower           (-# (cylinder home-button-radius 10))]
-
-    (difference
-     (difference block iphone-shape)
-     home-button-mask
-     connector-hollower
-     ;iphone-mask
-     )
-    ))
-
-(def iphone-shape-mask
-  (translate [0 0 (/ (* (+ 1 thicker-scale-factor) (iphone-dim-slim-cover :y)) 2)]
-             (-# iphone-thicker-shape2)))
-
-(def only-bottom-of-iphone-shape
-  (difference
-   (intersection
-    hollow-iphone-shape
-    (let [b (/ (iphone-dim-slim-cover :y) iphone-nth-of-bottom)
-          a (- (/ (iphone-dim-slim-cover :y) 2) (/ b 2))]
-      (-#(translate [0 (- a) 0]
-                    (cube (+ (iphone-dim-slim-cover :x) 1)
-                          b
-                          (+ (iphone-dim-slim-cover :z) 10))))))
-   (let [a (- (/ (iphone-dim-slim-cover :y) 2) (+ cover-side-radius) (/ home-button-radius 2))]
-     (-# (translate
-          [0 (- a) 10]
-          (cylinder home-button-radius 20))))))
-
 (def dock-shell
   (let [outer-dim  {:x (+ thickness dock-x) :y (+ thickness dock-y) :z (+ thickness dock-z)}
         dock-inner (create-dock-shape dock-x dock-y dock-z dock-corner-radius)
         dock-outer (create-dock-shape (outer-dim :x) (outer-dim :y) (outer-dim :z) dock-corner-radius)
 
         ;; The distance between the edge and the start of the connector
-        connector-y-edge-distance 4
 
-        a (+ (- (/ dock-y 2) (/ (connector-dim :y) 2) (+ thickness connector-y-edge-distance)))
-        connector-hollower (translate [0  a 0] ;3.8 from front edge inner
-                                                    (-#(cube (+ (connector-dim :x) 0) (+ 0 (connector-dim :y)) 30)))
         back-hollower      (translate [0 (/ dock-y 2) 0]
                                       (cube (- (+ 3 (outer-dim :x)) 0) 5 (+ 3 (outer-dim :z))))
         shell              (difference
-                            (union (let [magicnr 15]
-                                     (->> only-bottom-of-iphone-shape
-                                          (translate [0 (- (/ dock-y 2) (/ (iphone-dim-slim-cover :x) 2) 6) magicnr])
-                                          (rotate [(- (/ pi 25)) 0 0])))
-                                   dock-outer)
+                            dock-outer
                             (-# dock-inner))]
     (difference shell
                 ;; Hollow out the combined part instead, this will allows to
                 ;; incorporatethe angle.
-                connector-hollower
                 back-hollower)))
+
+(def hollow-iphone-shape
+  (let [
+        outer-dim  {:x (+ thickness dock-x) :y (+ thickness dock-y) :z (+ thickness dock-z)}
+        dock-outer (create-dock-shape (outer-dim :x) (outer-dim :y) (outer-dim :z) dock-corner-radius)
+        dock-inner (create-dock-shape dock-x dock-y dock-z dock-corner-radius)
+
+        back-hollower (translate [0 (/ dock-y 2) 0]
+                                 (cube (- (+ 3 (outer-dim :x)) 0) 5 (+ 3 (outer-dim :z))))
+        connector-y-edge-distance 4
+        shell         (difference
+                       dock-outer
+                       (-# dock-inner))
+        dock-shell2   (->> (difference shell
+                                       ;; Hollow out the combined part instead, this will allows to
+                                       ;; incorporatethe angle.
+                                       back-hollower)
+                           (rotate [0 0 pi])
+                           (translate [0 (-  (+ (/ (connector-dim :y) connector-y-edge-distance)
+                                                (/ dock-y 2)))
+                                       0]))
+
+        thicker-scale-factor      1.1
+        raise-up                  #(rotate [(/ pi 2) 0 0] %)
+        iphone-shape              (translate [0 0 (/ (iphone-dim-slim-cover :y) 2)] (raise-up (iphonev2 tolerance)))
+        block-z                   (+ home-button-distance-from-bottom home-button-radius)
+        connector-hollower        (-#(cube (- (iphone-dim-slim-cover :x) 15) (+ 0 (connector-dim :y)) 50))
+        block                     (translate [0 0 (/ block-z 2)]
+                                             (cube (+ thickness (iphone-dim-slim-cover :x))
+                                                   (+ thickness (iphone-dim-slim-cover :z))
+                                                   block-z))
+        home-button-mask          (let [h      (+ thickness (iphone-dim-slim-cover :z))
+                                        z-zero (+ home-button-distance-from-bottom home-button-radius)
+                                        x-zero (-
+                                                (/ (iphone-dim-slim-cover :y) 2)
+                                                (+ cover-side-radius)
+                                                (/ home-button-radius 2))]
+                                    (translate [0 (- h 6) z-zero]
+                                               (rotate [(/ pi 2) 0 0]
+                                                       (-# (cylinder [(+ home-button-radius 3) home-button-radius ]
+                                                                     h)))))
+        angle                     78.5
+        angled-connector-hollower (rotate [(deg->rad 10) 0 0] connector-hollower)
+        guide                     (translate [0 -10 9] (rotate [(deg->rad 10) 0 0]
+                                                        (difference block iphone-shape)))
+        ;; Use to make the front hull
+        guide-front (difference guide
+                                (->> (cube 100 20 30)
+                                     (rotate [(deg->rad 10) 0 0])
+                                     (translate [0 -15 10])))
+        ;; used to make the back hull
+        guide-left (intersection guide
+                                (->> (cube 10 20 30)
+                                     (rotate [(deg->rad 10) 0 0])
+                                     (translate [41 -10 9])))
+        guide-right (intersection guide
+                                (->> (-# (cube 10 20 30))
+                                     (rotate [(deg->rad 10) 0 0])
+                                     (translate [-41 -10 9])))
+        guide-back (difference guide
+                                (->> (cube 100 20 30)
+                                     (rotate [(deg->rad 10) 0 0])
+                                     (translate [0 -5 9])))
+        dock-back (difference dock-shell2
+                              (translate [0 -15 0] (cube 100 50 30)))
+        dock-front (difference dock-shell2
+                              (translate [0 -30 0] (cube 100 50 30)))
+        dock-left (difference dock-shell2
+                              (translate [-17.5 -30 0] (cube 100 60 30)))
+        dock-right (difference dock-shell2
+                              (translate [17.5 -30 0] (cube 100 60 30)))
+        speaker-hole-diameter     1
+        speaker-hole              (translate [0 0 10]
+                                             (rotate [(deg->rad 10) 0 0]
+                                                     (rotate [(/ pi 2) 0 0]
+                                                             (-# (cylinder speaker-hole-diameter 20)))))
+        the-shape                 (difference
+                                   (union dock-shell2
+                                          (hull guide-back dock-back)
+                                          (hull dock-front guide-front)
+                                          (hull dock-left guide-left)
+                                          (hull dock-right guide-right)
+                                          guide)
+                                   (translate [0 -10 9] (rotate [(deg->rad 10) 0 0] home-button-mask))
+                                   
+                                   (translate [0 -8.5 0] angled-connector-hollower)
+                                   (translate [0 (-  (+ (/ (connector-dim :y) connector-y-edge-distance)
+                                                        (/ dock-y 2)))
+                                               0] dock-inner))
+        speaker-holes (loop [n   4
+                             res []]
+                        (if (> n 0)
+                          (recur (- n 1) (conj
+                                          res
+                                          (translate [(- (* 4 n)) 0 2] speaker-hole)))
+                          res))
+        speaker-holes-left (translate [(- (/ dock-x 2) 5) 0 0] speaker-holes)
+        speaker-holes-right (translate [-9 0 0] speaker-holes)
+        all           (difference
+                       the-shape
+                       speaker-holes-left
+                       speaker-holes-right)]
+
+    all))
 
 ;(def iphone-ref (cube (iphone-dim-slim-cover :x) (iphone-dim-slim-cover :y) (iphone-dim-slim-cover :z)))
 (def ruler (translate [0 0 0] (cube (iphone-dim-slim-cover :x) dock-y dock-z)))

@@ -10,12 +10,12 @@
     Like almost x2 too big...
 *** DONE Very tight fit for the dock
       Maybe add a millimeter
-** 0.0.2 issues [4/7]
-*** TODO guide & hole too far behind
-*** TODO iphone sits too high
+** 0.0.2 issues [6/6]
+*** DONE guide & hole too far behind
+*** DONE iphone sits too high
     the charging does not happen because the connector is not going deep enough.
     Make a hole along the x axis.
-*** TODO Leave hole for home button
+*** DONE Leave hole for home button
 *** +Give it 2mm more on the side of the guide+
     See below, thickness was fucked
 *** DONE Make the guide slightly more angled
@@ -25,6 +25,11 @@
     =10+2+2 = 14= with a 10 cube  and a 2 rs cylinder
 *** DONE Guide hollower was the other way around..
     The thickness needed to be added .
+    
+** 0.0.3
+*** Wishlist [0/2]
+**** TODO Holes for speaker
+**** TODO Angled guide
     
 * Seperate tests
 ** Phone guide

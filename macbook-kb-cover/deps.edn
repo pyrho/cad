@@ -1,0 +1,4 @@
+{:paths ["src"]
+ :deps  {scad-clj {:mvn/version "0.5.3"}
+         nrepl {:mvn/version "0.5.3"}}
+ :aliases {:nrepl {:main-opts ["-e" "(require,'[nrepl.server,:refer,[start-server]]),(start-server,:port,60606)"]}}}

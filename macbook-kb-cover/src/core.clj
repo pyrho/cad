@@ -36,7 +36,7 @@
   "Size of the right of the cover"
   { :x (left-d :x) :y 107.2 })
 
-;(def cap-height 0.65)
+(def actual-cap-height 0.65)
 (def cap-height 1.2)
 (def cover-additional-z 1)
 
@@ -52,7 +52,7 @@
 (def speaker
   (cube speaker-x-d
         speaker-y-d
-        cap-height
+        actual-cap-height
         :center false))
 (def left-speaker
   (mirror [1 0 0] (translate [0 0 0] speaker)))

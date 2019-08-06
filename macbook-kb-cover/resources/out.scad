@@ -202,5 +202,12 @@ difference () {
       cube ([36.2, 107.1, 0.65]);
     }
   }
+  #union () {
+    translate ([-36.2, 10, 2.2]) {
+      linear_extrude (height=2.2, center=true){
+        text ("Left", size=50, font="Avenir");
+      }
+    }
+  }
 }
 $fn = 10;

@@ -126,12 +126,15 @@
                (conj all-keys (place-row (first kb-map_) y-offset)))))))
 
 (def all
-  (let [speakers (union left-speaker)]
+  (let [speakers  (union left-speaker)
+        left-text (->> (text "Left" :font "Avenir" :size 50)
+                       (extrude-linear { :height (+ cover-additional-z cap-height 0)})
+                       (translate [(- speaker-x-d) 10 (+ cover-additional-z cap-height 0)]))]
     (difference
      (translate [(- speaker-x-d) 0 0] over)
      keyboard
      left-speaker
-     )))
+     (-# left-text))))
 
 (spit
  (str "resources/" "out.scad")

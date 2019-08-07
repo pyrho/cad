@@ -3,7 +3,7 @@
             [scad-clj.scad :refer :all]))
 
 ;;;;;; Constants
-(def scad-fn 10)
+(def scad-fn 50)
 (def tolerance 0.5)
 (def print-res 0.4)
 
@@ -11,18 +11,12 @@
   "Cap y-size. Shared by all caps"
   16.6)
 
-;(def wanted-gap (- 0.01))
-                                        ; wanted = real-gap - x
-                                        ; wanted + x = real
-                                        ; x = real - wanted
+(def speaker-x-d 36.2)
+(def speaker-y-d 107.1)
 
-                                        ; 1 = 2.2 - x
-                                        ; 1 + x = 2.2
-                                        ; x = 2.2 - 1
-                                        ; x = 1.2
 (def real-gap 2)
 ;(def gap-offset (- real-gap (- real-gap wanted-gap)))
-(def gap-offset (* print-res 3))
+(def gap-offset (* print-res 1))
 
 (def gap-d
   "Gap between each each for both axes"
@@ -47,13 +41,24 @@
         (+ cover-additional-z cap-height)
         :center false))
 
-(def speaker-x-d 36.2)
-(def speaker-y-d 107.1)
 (def speaker
-  (cube speaker-x-d
-        speaker-y-d
-        actual-cap-height
-        :center false))
+  (let [rs 1
+        hole (->> (cylinder rs 10)
+                   (with-fn 10)
+                   (translate [rs rs 0]))
+
+        holes (translate [(* 3 rs) (* 3 rs) 0]
+                         (for [ii (range 9)]
+                           (for [i (range 3)]
+                             (translate [(* i (* 14 rs)) (* ii 14) 0]
+                                        hole))))]
+    (difference
+     (cube speaker-x-d
+           speaker-y-d
+           actual-cap-height
+           :center false)
+     (-# holes))))
+
 (def left-speaker
   (mirror [1 0 0] (translate [0 0 0] speaker)))
 (def right-speaker
@@ -129,7 +134,7 @@
   (let [speakers  (union left-speaker)
         left-text (->> (text "Left" :font "Avenir" :size 50)
                        (extrude-linear { :height (+ cover-additional-z cap-height 0)})
-                       (translate [(- speaker-x-d) 10 (+ cover-additional-z cap-height 0)]))]
+                       (translate [0 10 (+ cover-additional-z cap-height 0)]))]
     (difference
      (translate [(- speaker-x-d) 0 0] over)
      keyboard
@@ -138,8 +143,7 @@
 
 (spit
  (str "resources/" "out.scad")
- (write-scad [;(include "BH-Lib/all.scad")
-              all
+ (write-scad [all
               (fn! scad-fn)
               ]))
 

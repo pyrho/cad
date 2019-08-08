@@ -41,26 +41,46 @@
         (+ cover-additional-z cap-height)
         :center false))
 
-(def speaker
-  (let [rs 1
+(def speaker-holes
+  (let [rs 3
         hole (->> (cylinder rs 10)
-                   (with-fn 10)
                    (translate [rs rs 0]))
 
-        holes (translate [(* 3 rs) (* 3 rs) 0]
-                         (for [ii (range 9)]
+        factor 2
+        holes (translate [(* factor rs) (* factor rs) 0]
+                         (for [ii (range 7)]
                            (for [i (range 3)]
-                             (translate [(* i (* 14 rs)) (* ii 14) 0]
+                             (translate [(* i (* 4 rs)) (* ii 15) 0]
                                         hole))))]
-    (difference
-     (cube speaker-x-d
-           speaker-y-d
-           actual-cap-height
-           :center false)
-     (-# holes))))
+    (-# holes)))
+
+(def bottom-plate
+  "This represents the case of the macbook, used to hollow out
+   parts that need to sit right on the case."
+  (cube 1000 1000 actual-cap-height))
+
+(def speaker
+  (cube speaker-x-d
+        speaker-y-d
+        actual-cap-height
+        :center false))
+
+(def left-thumb-cluster
+  (let [rs (/ 120 2)] (difference
+           (translate [(- (/ (left-d :x) 2) 9.7) 0 0]
+                      (cylinder rs (+ cover-additional-z cap-height 0) :center false))
+           (-# (translate [(- (/ rs 2)) -100 0]
+                          (cube 100 100 10 :center false))))))
+(def right-thumb-cluster
+  (let [rs (/ 120 2)] (difference
+           (translate [(+ 121 (- (/ (left-d :x) 2) 9.7)) 0 0]
+                      (cylinder rs (+ cover-additional-z cap-height 0) :center false))
+           (-# (translate [(+ 235 (- (/ rs 2))) -100 0]
+                          (cube 100 100 10 :center false))))))
 
 (def left-speaker
   (mirror [1 0 0] (translate [0 0 0] speaker)))
+
 (def right-speaker
   (let [nb-top-key-in-u (+ 14 1.5)
         nb-key-for-gaps 14
@@ -131,21 +151,43 @@
                (conj all-keys (place-row (first kb-map_) y-offset)))))))
 
 (def all
-  (let [speakers  (union left-speaker)
-        left-text (->> (text "Left" :font "Avenir" :size 50)
+  (let [left-text (->> (text "Left" :font "Avenir" :size 30)
                        (extrude-linear { :height (+ cover-additional-z cap-height 0)})
-                       (translate [0 10 (+ cover-additional-z cap-height 0)]))]
-    (difference
-     (translate [(- speaker-x-d) 0 0] over)
-     keyboard
-     left-speaker
-     (-# left-text))))
+
+                       (translate [10 20 (+ cover-additional-z cap-height 0)]))
+        nb-top-key-in-u         (+ 14 1.5)
+        nb-key-for-gaps 14
+        original-gap-d  2
+        u1-d            17
+        right-text      (->> (text "Right" :font "Avenir" :size 30)
+                             (extrude-linear { :height (+ cover-additional-z cap-height 0)})
+                             (translate [30 20 (+ cover-additional-z cap-height 0)]))
+        ;right-offset 136.8
+        right-offset 137.8
+        right-part      (difference
+                         (union
+                          right-thumb-cluster
+                          (translate [right-offset 0 0] over))
+                         (-# bottom-plate)
+                         (-# keyboard)
+                         ;(translate [100 0 0] (-# right-speaker))
+                         (translate [(+ 130 right-offset) 0 0] speaker-holes)
+                         (translate [(+ right-offset) 0 0] (-# right-text))
+                         )
+        left-part       (difference
+                         (union left-thumb-cluster (translate [(- speaker-x-d) 0 0] over))
+                         ;(-# bottom-plate)
+                         (-# keyboard)
+                         left-speaker
+                         (translate [( - speaker-x-d) 0 0] speaker-holes)
+                         (-# left-text))]
+    right-part))
 
 (spit
  (str "resources/" "out.scad")
- (write-scad [all
-              (fn! scad-fn)
-              ]))
+ (write-scad [;right-speaker
+              all
+              (fn! scad-fn)]))
 
 
 ;;;; Playground

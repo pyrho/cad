@@ -150,7 +150,7 @@
                (+ (gap-d :y) (+ gap-offset u-y-d) y-offset)
                (conj all-keys (place-row (first kb-map_) y-offset)))))))
 
-(def all
+(defn all []
   (let [left-text (->> (text "Left" :font "Avenir" :size 30)
                        (extrude-linear { :height (+ cover-additional-z cap-height 0)})
 
@@ -181,13 +181,20 @@
                          left-speaker
                          (translate [( - speaker-x-d) 0 0] speaker-holes)
                          (-# left-text))]
-    right-part))
+    
+    (do (spit
+         (str "resources/" "right.scad")
+         (write-scad [(fn! scad-fn) right-part]))
+        (spit
+         (str "resources/" "left.scad")
+         (write-scad [(fn! scad-fn) left-part])))))
+(all)
 
-(spit
- (str "resources/" "out.scad")
- (write-scad [;right-speaker
-              all
-              (fn! scad-fn)]))
+;; (spit
+;;  (str "resources/" "out.scad")
+;;  (write-scad [;right-speaker
+;;               all
+;;               (fn! scad-fn)]))
 
 
 ;;;; Playground

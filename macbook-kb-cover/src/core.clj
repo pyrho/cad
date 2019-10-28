@@ -65,6 +65,13 @@
         actual-cap-height
         :center false))
 
+(def right-speaker-base
+  (cube (+ 20 speaker-x-d)
+        speaker-y-d
+        actual-cap-height
+        :center false))
+
+
 (def left-thumb-cluster
   (let [rs (/ 120 2)] (difference
            (translate [(- (/ (left-d :x) 2) 9.7) 0 0]
@@ -79,14 +86,15 @@
                           (cube 100 100 10 :center false))))))
 
 (def left-speaker
-  (mirror [1 0 0] (translate [0 0 0] speaker)))
+  (mirror [1 0 0] speaker))
 
 (def right-speaker
-  (let [nb-top-key-in-u (+ 14 1.5)
-        nb-key-for-gaps 14
-        original-gap-d 2
-        u1-d 17]
-    (translate [(+ (* u1-d nb-top-key-in-u) (+ (* (gap-d :x) nb-key-for-gaps) original-gap-d)) 0 0] speaker)))
+  (let [nb-top-key-in-u (+ 14.5)
+        nb-key-for-gaps 13
+        original-gap-d (gap-d :x)
+        u1-d 17
+        magicnr 6.5]
+    (translate [(+ magicnr (* nb-top-key-in-u u1-d) (* nb-key-for-gaps original-gap-d)) 0 0] right-speaker-base)))
 
 (def keyboard
   (let [merge-vectors (comp vec flatten conj) 
@@ -168,9 +176,9 @@
                          (union
                           right-thumb-cluster
                           (translate [right-offset 0 0] over))
-                         (-# bottom-plate)
+                         ;; (-# bottom-plate)
                          (-# keyboard)
-                         ;(translate [100 0 0] (-# right-speaker))
+                         (-# right-speaker)
                          (translate [(+ 130 right-offset) 0 0] speaker-holes)
                          (translate [(+ right-offset) 0 0] (-# right-text))
                          )
@@ -182,19 +190,14 @@
                          (translate [( - speaker-x-d) 0 0] speaker-holes)
                          (-# left-text))]
     
-    (do (spit
-         (str "resources/" "right.scad")
-         (write-scad [(fn! scad-fn) right-part]))
-        (spit
-         (str "resources/" "left.scad")
-         (write-scad [(fn! scad-fn) left-part])))))
-(all)
+    (union right-part)))
+;; (all)
 
-;; (spit
-;;  (str "resources/" "out.scad")
-;;  (write-scad [;right-speaker
-;;               all
-;;               (fn! scad-fn)]))
+(spit
+ (str "resources/" "right.scad")
+ (write-scad [;right-speaker
+              (all)
+              (fn! scad-fn)]))
 
 
 ;;;; Playground

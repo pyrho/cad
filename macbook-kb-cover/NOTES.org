@@ -1,0 +1,17 @@
+#+TITLE: Notes
+
+* 0.0.1 issues
+** TODO Key gaps too big
+   2 is too much, maybe 1 should be better
+** TODO Layer is thin
+   It may be due to the incorrect gaps, but it's way too easy to activate
+   a switch right now.
+   Given that the amount of force required to trigger a key is very small,
+   maybe an air gap between the cover and the key is necessary..
+** TODO Print was mirror in slicer....
+   Rotate the model manually, I initially just mirrored it on cura, so the
+   test print was unusable...
+** TODO Do not use a brim
+   Use a skirt instead.
+** TODO Try printing in PLA
+   ABS is more flexible
